@@ -1,0 +1,218 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =====================================================
+   Flicword Design System — Dark Teal + Gold
+   Flat surfaces, thin borders, generous whitespace.
+   No glassmorphism. No heavy gradients.
+   ===================================================== */
+
+@layer base {
+  :root {
+    /* Backgrounds */
+    --background: 180 43% 7%;          /* #0A1A1A primary */
+    --background-secondary: 180 36% 9%; /* #0F2020 */
+    --foreground: 0 0% 94%;             /* #F0F0F0 */
+
+    /* Card surfaces */
+    --card: 180 36% 11%;                /* #112424 */
+    --card-foreground: 0 0% 94%;
+
+    --popover: 180 36% 11%;
+    --popover-foreground: 0 0% 94%;
+
+    /* Gold primary */
+    --primary: 40 60% 58%;              /* #D4A853 */
+    --primary-foreground: 180 43% 7%;
+    --primary-glow: 42 84% 74%;         /* #F5D485 */
+
+    --secondary: 180 28% 16%;           /* dark teal border-ish */
+    --secondary-foreground: 0 0% 94%;
+
+    --muted: 180 28% 14%;
+    --muted-foreground: 180 8% 58%;     /* #8A9E9E */
+
+    --accent: 40 73% 66%;               /* #E8C06A */
+    --accent-foreground: 180 43% 7%;
+
+    --success: 152 62% 49%;             /* #2ECC8A */
+    --success-foreground: 180 43% 7%;
+
+    --destructive: 0 70% 61%;           /* #E05555 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 180 28% 16%;              /* #1E3535 */
+    --input: 180 28% 16%;
+    --ring: 40 60% 58%;
+
+    --radius: 1rem;                     /* 16px */
+
+    /* Gold gradient (subtle, only for select highlights) */
+    --gradient-primary: linear-gradient(135deg, hsl(40 60% 58%), hsl(40 73% 66%));
+
+    /* Soft gold glow */
+    --shadow-glow: 0 0 24px hsl(42 84% 74% / 0.25);
+    --shadow-card: inset 0 1px 0 hsl(0 0% 100% / 0.03), 0 1px 0 hsl(0 0% 0% / 0.3);
+  }
+
+  /* Dark mode = same — app is dark-only by design */
+  .dark {
+    --background: 180 43% 7%;
+    --foreground: 0 0% 94%;
+    --card: 180 36% 11%;
+    --card-foreground: 0 0% 94%;
+    --popover: 180 36% 11%;
+    --popover-foreground: 0 0% 94%;
+    --primary: 40 60% 58%;
+    --primary-foreground: 180 43% 7%;
+    --primary-glow: 42 84% 74%;
+    --secondary: 180 28% 16%;
+    --secondary-foreground: 0 0% 94%;
+    --muted: 180 28% 14%;
+    --muted-foreground: 180 8% 58%;
+    --accent: 40 73% 66%;
+    --accent-foreground: 180 43% 7%;
+    --success: 152 62% 49%;
+    --success-foreground: 180 43% 7%;
+    --destructive: 0 70% 61%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 180 28% 16%;
+    --input: 180 28% 16%;
+    --ring: 40 60% 58%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html, body, #root {
+    height: 100%;
+  }
+  body {
+    @apply text-foreground antialiased;
+    background-color: hsl(var(--background));
+    /* Subtle gold radial glow at top center — like a distant light source */
+    background-image:
+      radial-gradient(ellipse 60% 40% at 50% -10%, hsl(42 84% 74% / 0.08), transparent 70%),
+      radial-gradient(circle at 20% 100%, hsl(180 36% 13% / 0.5), transparent 60%);
+    background-attachment: fixed;
+    font-family: 'DM Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: 'ss01', 'cv11';
+    letter-spacing: -0.005em;
+  }
+
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+  }
+}
+
+/* =====================================================
+   Card primitives — flat dark teal, thin border, no blur.
+   Old class names (.glass, .glass-strong, .glass-glow)
+   are repurposed so existing components inherit the new look.
+   ===================================================== */
+@layer components {
+  .glass {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-card);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .glass-strong {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--shadow-card);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .glass-glow {
+    box-shadow: var(--shadow-glow), var(--shadow-card);
+    border-color: hsl(var(--primary) / 0.4);
+  }
+
+  /* Featured card with thin gold left border */
+  .card-featured {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-left: 2px solid hsl(var(--primary));
+    box-shadow: var(--shadow-card);
+  }
+
+  .card-featured-top {
+    background-color: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-top: 2px solid hsl(var(--primary));
+    box-shadow: var(--shadow-card);
+  }
+
+  /* Solid gold primary button replacement for `.bg-gradient-primary` */
+  .bg-gradient-primary {
+    background: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+  }
+
+  /* Solid gold text for `.text-gradient` */
+  .text-gradient {
+    color: hsl(var(--primary));
+    background: none !important;
+    -webkit-text-fill-color: hsl(var(--primary));
+  }
+
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Section eyebrow label */
+  .eyebrow {
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-primary;
+  }
+
+  /* Thin divider */
+  .divider {
+    height: 1px;
+    background-color: hsl(var(--border));
+  }
+
+  /* Subtle gold shimmer sweep */
+  .shimmer {
+    position: relative;
+    overflow: hidden;
+  }
+  .shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(110deg, transparent 30%, hsl(42 84% 74% / 0.12) 50%, transparent 70%);
+    transform: translateX(-100%);
+    animation: shimmer-sweep 3.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes shimmer-sweep {
+    0% { transform: translateX(-100%); }
+    60%, 100% { transform: translateX(100%); }
+  }
+
+  /* Press-down feedback for buttons */
+  .press {
+    @apply transition-transform active:scale-[0.97];
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { scrollbar-width: none; }
+
+  /* Subtle teal grid texture (optional usage) */
+  .bg-grid {
+    background-image:
+      linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}
