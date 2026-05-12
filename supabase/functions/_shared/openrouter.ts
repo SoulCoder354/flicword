@@ -17,7 +17,7 @@ const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const PRIMARY_LIMIT_PER_HOUR = 80;
 const FALLBACK_LIMIT_PER_HOUR = 80;
 
-type KeyName = "primary" | "fallback" | "fallback2";
+type KeyName = "primary" | "fallback" | "fallback2" | "fallback3";
 
 const getAdmin = () => {
   const url = Deno.env.get("SUPABASE_URL");
