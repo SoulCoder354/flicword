@@ -127,11 +127,13 @@ export async function callOpenRouter(
   const primaryKey = Deno.env.get("OPENROUTER_API_KEY");
   const fallbackKey = Deno.env.get("OPENROUTER_API_KEY_FALLBACK");
   const fallback2Key = Deno.env.get("OPENROUTER_API_KEY_FALLBACK_2");
+  const fallback3Key = Deno.env.get("OPENROUTER_API_KEY_FALLBACK_3");
 
   const available: { name: KeyName; key: string }[] = [];
   if (primaryKey) available.push({ name: "primary", key: primaryKey });
   if (fallbackKey) available.push({ name: "fallback", key: fallbackKey });
   if (fallback2Key) available.push({ name: "fallback2", key: fallback2Key });
+  if (fallback3Key) available.push({ name: "fallback3", key: fallback3Key });
 
   if (available.length === 0) {
     throw new Error("No OpenRouter API keys configured");
