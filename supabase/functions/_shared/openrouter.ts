@@ -117,7 +117,7 @@ export async function callOpenRouter(
   userPrompt: string,
   {
     temperature = 0.9,
-    maxTokens = 2000,
+    maxTokens = 600,
     model = "openai/gpt-4o",
     functionName = "unknown",
   }: { temperature?: number; maxTokens?: number; model?: string; functionName?: string } = {},
