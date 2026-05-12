@@ -163,6 +163,7 @@ export async function callOpenRouter(
         primary: PRIMARY_LIMIT_PER_HOUR,
         fallback: FALLBACK_LIMIT_PER_HOUR,
         fallback2: FALLBACK_LIMIT_PER_HOUR,
+        fallback3: FALLBACK_LIMIT_PER_HOUR,
       };
       ordered.sort((a, b) => {
         const aOver = counts[available.indexOf(a)] >= limits[a.name] ? 1 : 0;
