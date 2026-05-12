@@ -1,4 +1,4 @@
-// Shared OpenRouter helper for Flicword edge functions with primary + fallback keys.
+// Shared OpenRouter helper for Flicword edge functions with primary + 2 fallback keys.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 export const corsHeaders = {
@@ -15,6 +15,9 @@ export const json = (status: number, body: unknown) =>
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const PRIMARY_LIMIT_PER_HOUR = 80;
+const FALLBACK_LIMIT_PER_HOUR = 80;
+
+type KeyName = "primary" | "fallback" | "fallback2";
 
 const getAdmin = () => {
   const url = Deno.env.get("SUPABASE_URL");
@@ -29,13 +32,13 @@ const currentHourWindow = () => {
   return d.toISOString();
 };
 
-const getPrimaryHourCount = async (admin: any): Promise<number> => {
+const getHourCount = async (admin: any, keyName: KeyName): Promise<number> => {
   if (!admin) return 0;
   try {
     const { count } = await admin
       .from("api_usage")
       .select("id", { count: "exact", head: true })
-      .eq("key_name", "primary")
+      .eq("key_name", keyName)
       .gte("hour_window", currentHourWindow());
     return count ?? 0;
   } catch (_e) {
@@ -45,7 +48,7 @@ const getPrimaryHourCount = async (admin: any): Promise<number> => {
 
 const logUsage = async (
   admin: any,
-  keyName: "primary" | "fallback",
+  keyName: KeyName,
   functionName: string,
   success: boolean,
 ) => {
@@ -102,7 +105,6 @@ async function singleCall(apiKey: string, body: unknown): Promise<any> {
 
 const shouldFallback = (e: unknown) => {
   if (e instanceof OpenRouterError && FALLBACK_STATUSES.has(e.status)) return true;
-  // network/timeout/abort/etc
   if (e instanceof Error) {
     const m = e.message.toLowerCase();
     if (m.includes("timeout") || m.includes("network") || m.includes("connection") || m.includes("fetch failed")) {
@@ -124,7 +126,14 @@ export async function callOpenRouter(
 ): Promise<any> {
   const primaryKey = Deno.env.get("OPENROUTER_API_KEY");
   const fallbackKey = Deno.env.get("OPENROUTER_API_KEY_FALLBACK");
-  if (!primaryKey && !fallbackKey) {
+  const fallback2Key = Deno.env.get("OPENROUTER_API_KEY_FALLBACK_2");
+
+  const available: { name: KeyName; key: string }[] = [];
+  if (primaryKey) available.push({ name: "primary", key: primaryKey });
+  if (fallbackKey) available.push({ name: "fallback", key: fallbackKey });
+  if (fallback2Key) available.push({ name: "fallback2", key: fallback2Key });
+
+  if (available.length === 0) {
     throw new Error("No OpenRouter API keys configured");
   }
 
@@ -141,71 +150,44 @@ export async function callOpenRouter(
 
   const admin = getAdmin();
 
-  // Load balancing: route to fallback if primary already exceeded hourly limit
-  let usePrimaryFirst = true;
-  if (primaryKey && fallbackKey) {
-    const primaryCount = await getPrimaryHourCount(admin);
-    if (primaryCount >= PRIMARY_LIMIT_PER_HOUR) usePrimaryFirst = false;
+  // Load balancing: deprioritize keys that are over their hourly limit
+  const ordered = [...available];
+  if (available.length > 1) {
+    try {
+      const counts = await Promise.all(
+        available.map((k) => getHourCount(admin, k.name)),
+      );
+      const limits: Record<KeyName, number> = {
+        primary: PRIMARY_LIMIT_PER_HOUR,
+        fallback: FALLBACK_LIMIT_PER_HOUR,
+        fallback2: FALLBACK_LIMIT_PER_HOUR,
+      };
+      ordered.sort((a, b) => {
+        const aOver = counts[available.indexOf(a)] >= limits[a.name] ? 1 : 0;
+        const bOver = counts[available.indexOf(b)] >= limits[b.name] ? 1 : 0;
+        return aOver - bOver;
+      });
+    } catch (_e) {
+      // ignore, keep original order
+    }
   }
-  if (!primaryKey) usePrimaryFirst = false;
 
-  const tryKey = async (which: "primary" | "fallback", key: string) => {
+  let lastErr: unknown = null;
+  for (let i = 0; i < ordered.length; i++) {
+    const { name, key } = ordered[i];
     try {
       const result = await singleCall(key, body);
-      await logUsage(admin, which, functionName, true);
+      await logUsage(admin, name, functionName, true);
       return result;
     } catch (e) {
-      await logUsage(admin, which, functionName, false);
-      throw e;
-    }
-  };
-
-  // Primary path
-  if (usePrimaryFirst && primaryKey) {
-    try {
-      return await tryKey("primary", primaryKey);
-    } catch (e) {
-      console.error(`[${functionName}] Primary key failed:`, e);
-      if (!fallbackKey || !shouldFallback(e)) {
-        // Retry primary once (transient errors not in fallback set)
-        if (!fallbackKey) {
-          try {
-            return await tryKey("primary", primaryKey);
-          } catch (e2) {
-            throw e2;
-          }
-        }
-      }
-      // Fallback
-      if (fallbackKey) {
-        try {
-          return await tryKey("fallback", fallbackKey);
-        } catch (e2) {
-          console.error(`[${functionName}] Fallback key also failed:`, e2);
-          throw e2;
-        }
-      }
-      throw e;
+      await logUsage(admin, name, functionName, false);
+      console.error(`[${functionName}] Key ${name} failed:`, e);
+      lastErr = e;
+      const hasNext = i < ordered.length - 1;
+      if (!hasNext) break;
+      // Only proceed to next key on fallback-eligible errors
+      if (!shouldFallback(e)) break;
     }
   }
-
-  // Start with fallback (load-balanced or primary missing)
-  if (fallbackKey) {
-    try {
-      return await tryKey("fallback", fallbackKey);
-    } catch (e) {
-      console.error(`[${functionName}] Fallback key failed (load-balanced path):`, e);
-      if (primaryKey) {
-        try {
-          return await tryKey("primary", primaryKey);
-        } catch (e2) {
-          console.error(`[${functionName}] Primary key also failed:`, e2);
-          throw e2;
-        }
-      }
-      throw e;
-    }
-  }
-
-  throw new Error("No usable OpenRouter key");
+  throw lastErr ?? new Error("OpenRouter call failed");
 }
