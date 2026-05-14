@@ -103,9 +103,11 @@ const Profile = () => {
   const submitFeedback = async () => {
     if (!user || !feedback.trim()) return;
     setSubmitting(true);
-    const { error } = await supabase.from("feedback").insert({ user_id: user.id, message: feedback.trim() });
+    const { error } = await supabase.functions.invoke("submit-feedback", {
+      body: { message: feedback.trim() },
+    });
     setSubmitting(false);
-    if (error) return toast.error("Could not send feedback.");
+    if (error) return toast.error(error.message || "Could not send feedback.");
     setFeedback("");
     toast.success("Feedback sent. Thank you!");
   };

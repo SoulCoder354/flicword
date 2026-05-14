@@ -78,8 +78,14 @@ const Login = () => {
   return (
     <div className="relative min-h-dvh w-full flex flex-col items-center justify-center px-8 py-10">
       <div className="relative w-full max-w-sm flex flex-col items-center text-center animate-fade-in">
-        <div className="mb-4 inline-flex items-center justify-center gap-2">
-          <img src="/logo.png" alt="Flicword Logo" className="h-16 w-16 rounded-xl" />
+        <div className="mb-4 w-full max-w-[18rem] sm:max-w-[20rem] rounded-[2rem] overflow-hidden" style={{ backgroundColor: "#122121" }}>
+          <img
+            src="/logo.png"
+            alt="Flicword wordmark"
+            className="block h-auto w-full object-contain"
+            loading="eager"
+            decoding="async"
+          />
         </div>
         <h1 className="text-5xl font-bold tracking-tight text-foreground">
           Flicword<span className="text-primary">.</span>
